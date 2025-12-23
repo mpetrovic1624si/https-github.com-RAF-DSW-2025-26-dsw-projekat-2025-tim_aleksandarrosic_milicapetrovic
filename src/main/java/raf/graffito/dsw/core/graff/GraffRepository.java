@@ -17,10 +17,21 @@ public class GraffRepository {
     private Workspace workspace;
     private MessageGenerator messageGenerator;
     private List<RepositoryObserver> observers = new ArrayList<>();
+    private raf.graffito.dsw.controller.serializer.Serializer serializer;
 
     public GraffRepository(Workspace workspace) {
         this.workspace = workspace;
         this.messageGenerator = new MessageGenerator();
+    }
+    
+    public void setSerializer(raf.graffito.dsw.controller.serializer.Serializer serializer) {
+        this.serializer = serializer;
+    }
+    
+    private void markChanged() {
+        if (serializer != null) {
+            serializer.markChanged();
+        }
     }
 
     public Workspace getWorkspace() {
@@ -45,6 +56,7 @@ public class GraffRepository {
 
         if (parent instanceof GraffNodeComposite composite) {
             composite.addChild(child);
+            markChanged();
             notifyObservers();
             return true;
         }
@@ -64,6 +76,7 @@ public class GraffRepository {
         GraffNode parent = node.getParent();
         if (parent instanceof GraffNodeComposite composite) {
             composite.removeChild(node);
+            markChanged();
             notifyObservers();
             return true;
         }

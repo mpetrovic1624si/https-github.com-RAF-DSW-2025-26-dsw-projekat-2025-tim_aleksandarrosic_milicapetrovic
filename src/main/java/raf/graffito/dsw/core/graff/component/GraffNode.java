@@ -1,9 +1,11 @@
 package raf.graffito.dsw.core.graff.component;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 public abstract class GraffNode {
     protected String name;
+    @JsonIgnore
     protected GraffNode parent;
 
     public GraffNode(String name, GraffNode parent) {
