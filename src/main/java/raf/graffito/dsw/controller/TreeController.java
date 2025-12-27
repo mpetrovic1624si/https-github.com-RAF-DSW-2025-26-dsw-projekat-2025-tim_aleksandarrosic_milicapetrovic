@@ -4,6 +4,9 @@ import raf.graffito.dsw.gui.swing.JTree.GraffTreeImplementation;
 import raf.graffito.dsw.core.graff.component.GraffNode;
 import raf.graffito.dsw.core.graff.composites.Presentation;
 import raf.graffito.dsw.core.graff.leafs.Slide;
+import view.SlideView;
+import model.Slide;
+import raf.graffito.dsw.core.graff.GraffRepository;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -17,10 +20,12 @@ public class TreeController {
 
     private GraffTreeImplementation graffTree;
     private JTabbedPane tabbedPane;
+    private GraffRepository repository;
 
     public TreeController(GraffTreeImplementation graffTree, JTabbedPane tabbedPane) {
         this.graffTree = graffTree;
         this.tabbedPane = tabbedPane;
+        this.repository = graffTree.getRepository();
         attachListeners();
     }
 
@@ -61,7 +66,7 @@ public class TreeController {
                     }
                 }
                 if (!exists) {
-                    tabbedPane.addTab(slide.getName(), new JPanel());
+                    createSlideTab(slide);
                 }
             }
         }
@@ -76,8 +81,32 @@ public class TreeController {
                 }
             }
             if (!exists) {
-                tabbedPane.addTab(slide.getName(), new JPanel());
+                createSlideTab(slide);
                 }
             }
+    }
+
+    private void createSlideTab(raf.graffito.dsw.core.graff.leafs.Slide slideNode) {
+        // Create model.Slide for this tab
+        Slide modelSlide = new Slide();
+        
+        // Create SlideView
+        SlideView slideView = new SlideView(modelSlide);
+        
+        // Create SlideController and connect it
+        SlideController slideController = new SlideController(modelSlide, repository, slideView);
+        slideView.addMouseListener(slideController.getMouseListener());
+        slideView.addMouseMotionListener(slideController.getMouseMotionListener());
+        slideView.addMouseWheelListener(slideController.getMouseWheelListener());
+        slideView.addKeyListener(slideController.getKeyListener());
+        slideView.setFocusable(true);
+        slideView.requestFocus();
+        
+        // Register controller and slide view with manager
+        SlideControllerManager.getInstance().registerController(slideNode.getName(), slideController);
+        SlideControllerManager.getInstance().registerSlideView(slideNode.getName(), slideView);
+        
+        // Add tab
+        tabbedPane.addTab(slideNode.getName(), slideView);
     }
 }

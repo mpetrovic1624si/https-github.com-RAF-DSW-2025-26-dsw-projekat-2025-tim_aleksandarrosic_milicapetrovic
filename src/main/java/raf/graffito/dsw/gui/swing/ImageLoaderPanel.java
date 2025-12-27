@@ -81,7 +81,6 @@ public class ImageLoaderPanel extends JPanel {
             thumbnailLabel.addMouseListener(new java.awt.event.MouseAdapter() {
                 @Override
                 public void mouseClicked(java.awt.event.MouseEvent e) {
-                    // Could trigger image selection event here
                     fireImageSelected(imageFile);
                 }
             });
@@ -123,8 +122,10 @@ public class ImageLoaderPanel extends JPanel {
     }
 
     private void fireImageSelected(File imageFile) {
-        // This can be extended to notify listeners
-        // For now, just highlight the selected thumbnail
+        // Update ImageLoaderManager
+        raf.graffito.dsw.controller.ImageLoaderManager.getInstance().setSelectedImage(imageFile);
+        
+        // Highlight the selected thumbnail
         for (Component comp : thumbnailContainer.getComponents()) {
             if (comp instanceof JLabel) {
                 JLabel label = (JLabel) comp;
@@ -159,4 +160,3 @@ public class ImageLoaderPanel extends JPanel {
         return null;
     }
 }
-

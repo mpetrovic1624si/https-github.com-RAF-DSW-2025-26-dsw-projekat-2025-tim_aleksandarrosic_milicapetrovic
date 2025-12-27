@@ -9,6 +9,7 @@ import raf.graffito.dsw.core.graff.GraffRepository;
 import raf.graffito.dsw.core.graff.composites.Workspace;
 import raf.graffito.dsw.gui.swing.JTree.GraffTreeImplementation;
 import raf.graffito.dsw.controller.TreeController;
+import raf.graffito.dsw.controller.SlideControllerManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,34 +20,15 @@ public class MainFrame extends JFrame {
     private GraffTreeImplementation graffTree;
     private GraffRepository repository;
     private JTabbedPane tabbedPane;
+    private RightToolBar rightToolBar;
+    private ImageLoaderPanel imageLoaderPanel;
 
     public MainFrame() {
         repository = new GraffRepository(new Workspace("Workspace"));
         graffTree = new GraffTreeImplementation(repository);
         tabbedPane = new JTabbedPane();
-        initialize();
         repository.addObserver(() -> graffTree.reload());
-        Slide slide = new Slide();
-
-        slide.addElement(new ImageElement(50, 50, 200, 150, "test.jpg"));
-        SlideView slideView = new SlideView(slide);
-
-
-        JPanel thumbnails = new JPanel();
-        thumbnails.setPreferredSize(new Dimension(150, 600));
-        thumbnails.setLayout(new BoxLayout(thumbnails, BoxLayout.Y_AXIS));
-
-        thumbnails.add(new JLabel(new ImageIcon("test.jpg")));
-
-        setLayout(new BorderLayout());
-        add(slideView, BorderLayout.CENTER);
-        add(thumbnails, BorderLayout.EAST);
-
-        pack();
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setVisible(true);
-
+        initialize();
     }
 
     public static MainFrame getInstance(){
@@ -64,18 +46,52 @@ public class MainFrame extends JFrame {
         setJMenuBar(menu);
 
         MyToolBar toolBar = new MyToolBar(graffTree, repository);
-        add(toolBar, BorderLayout.NORTH);
+        
+        // Window mode selector
+        WindowModePanel modePanel = new WindowModePanel();
+        WindowModeController.getInstance().setMainFrame(this);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(toolBar, BorderLayout.CENTER);
+        topPanel.add(modePanel, BorderLayout.EAST);
+        add(topPanel, BorderLayout.NORTH);
+
+        // Initialize SlideControllerManager with tabbedPane
+        SlideControllerManager.getInstance().setTabbedPane(tabbedPane);
+        
+        // Update right toolbar when tab changes
+        tabbedPane.addChangeListener(e -> {
+            if (rightToolBar != null) {
+                view.SlideView currentView = SlideControllerManager.getInstance().getCurrentSlideView();
+                rightToolBar.setCurrentSlideView(currentView);
+            }
+        });
 
         TreeController treeController = new TreeController(graffTree, tabbedPane);
 
-        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        
+        // Left side: Tree
+        JSplitPane leftSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         JScrollPane leftScroll = new JScrollPane(graffTree.getTree());
-        split.setLeftComponent(leftScroll);
-        split.setRightComponent(tabbedPane);
-        split.setDividerLocation(250);
+        leftSplit.setTopComponent(leftScroll);
+        
+        // Image loader panel on left bottom
+        imageLoaderPanel = new ImageLoaderPanel();
+        leftSplit.setBottomComponent(imageLoaderPanel);
+        leftSplit.setDividerLocation(400);
+        
+        mainSplit.setLeftComponent(leftSplit);
+        mainSplit.setRightComponent(tabbedPane);
+        mainSplit.setDividerLocation(300);
 
-        add(split, BorderLayout.CENTER);
+        // Create right toolbar and add to EAST
+        rightToolBar = new RightToolBar();
+        add(rightToolBar, BorderLayout.EAST);
+
+        add(mainSplit, BorderLayout.CENTER);
     }
 
     public JTabbedPane getTabbedPane(){ return tabbedPane; }
+    public RightToolBar getRightToolBar(){ return rightToolBar; }
+    public ImageLoaderPanel getImageLoaderPanel(){ return imageLoaderPanel; }
 

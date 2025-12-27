@@ -11,17 +11,30 @@ import javax.swing.*;
 
 public class MyMenuBar extends JMenuBar {
     public MyMenuBar(GraffTreeImplementation tree, GraffRepository repository) {
-        JMenu file = new JMenu("File");
-        file.add(new ExitAction());
-        add(file);
-
-        JMenu edit = new JMenu("Edit");
-        edit.add(new AddNodeAction(tree, repository));
-        edit.add(new RemoveNodeAction(tree, repository));
-        add(edit);
-
-        JMenu help = new JMenu("Help");
-        help.add(new AboutUsAction());
-        add(help);
+        // File button
+        JButton fileButton = new JButton(new ExitAction());
+        fileButton.setText("File");
+        add(fileButton);
+        
+        addSeparator();
+        
+        // AboutUs button
+        JButton aboutUsButton = new JButton(new AboutUsAction());
+        aboutUsButton.setText("AboutUs");
+        add(aboutUsButton);
+        
+        addSeparator();
+        
+        // DeleteNode button
+        JButton deleteNodeButton = new JButton(new RemoveNodeAction(tree, repository));
+        deleteNodeButton.setText("DeleteNode");
+        add(deleteNodeButton);
+        
+        addSeparator();
+        
+        // AddNode button
+        JButton addNodeButton = new JButton(new AddNodeAction(tree, repository));
+        addNodeButton.setText("AddNode");
+        add(addNodeButton);
     }
 }

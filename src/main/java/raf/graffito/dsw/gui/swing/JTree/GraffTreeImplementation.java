@@ -64,4 +64,8 @@ public class GraffTreeImplementation implements GraffTree {
         populateTree(rootNode, repository.getWorkspace());
         treeModel.reload();
     }
+
+    public GraffRepository getRepository() {
+        return repository;
+    }
 }

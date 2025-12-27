@@ -7,6 +7,8 @@ import java.awt.event.*;
 import java.awt.event.*;
 import javax.swing.*;
 import raf.graffito.dsw.controller.undo.UndoManager;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.KeyEvent;
 
 public class SlideController {
 
@@ -16,6 +18,7 @@ public class SlideController {
     private GraffRepository repository;
 
     private ToolMode currentMode;
+    private view.SlideView slideView;
 
     // Mode objekti
     private AddMode addMode;
@@ -23,10 +26,12 @@ public class SlideController {
     private MoveMode moveMode;
     private raf.graffito.dsw.controller.toolmodes.ResizeMode resizeMode;
     private raf.graffito.dsw.controller.toolmodes.RotateMode rotateMode;
+    private raf.graffito.dsw.controller.toolmodes.ZoomMode zoomMode;
 
-    public SlideController(model.Slide slide, GraffRepository repository) {
+    public SlideController(model.Slide slide, GraffRepository repository, view.SlideView slideView) {
         this.slide = slide;
         this.repository = repository;
+        this.slideView = slideView;
         this.undoManager = new UndoManager();
         this.serializer = new Serializer(repository);
 
@@ -36,9 +41,21 @@ public class SlideController {
         this.moveMode = new MoveMode(slide, undoManager);
         this.resizeMode = new raf.graffito.dsw.controller.toolmodes.ResizeMode(slide, undoManager);
         this.rotateMode = new raf.graffito.dsw.controller.toolmodes.RotateMode(slide, undoManager);
+        this.zoomMode = new raf.graffito.dsw.controller.toolmodes.ZoomMode(slideView);
 
         // Po defaultu AddMode
         this.currentMode = addMode;
+    }
+    
+    public SlideController(model.Slide slide, GraffRepository repository) {
+        this(slide, repository, null);
+    }
+    
+    public void setSlideView(view.SlideView slideView) {
+        this.slideView = slideView;
+        if (slideView != null) {
+            this.zoomMode = new raf.graffito.dsw.controller.toolmodes.ZoomMode(slideView);
+        }
     }
 
     public void setMode(ToolMode mode) {
@@ -70,7 +87,14 @@ public class SlideController {
     }
 
     public MouseWheelListener getMouseWheelListener() {
-        return e -> currentMode.mouseWheelMoved(e);
+        return e -> {
+            // Zoom je uvek aktivan, nezavisno od trenutnog moda
+            if (zoomMode != null) {
+                zoomMode.mouseWheelMoved(e);
+            }
+            // Takođe pozovi trenutni mode ako ima implementaciju
+            currentMode.mouseWheelMoved(e);
+        };
     }
 
     // Undo/Redo
@@ -92,4 +116,46 @@ public class SlideController {
     public void setSelectMode() { setMode(selectMode); }
     public void setMoveMode() { setMode(moveMode); }
     public void setResizeMode() { setMode(resizeMode); }
-}
+    public void setRotateMode() { setMode(rotateMode); }
+    
+    // Delete selected elements
+    public void deleteSelectedElements() {
+        DeleteElementAction.deleteSelectedElements(slide, undoManager);
+    }
+    
+    // Get keyboard listener for delete key
+    public KeyListener getKeyListener() {
+        return new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+                    deleteSelectedElements();
+                } else if (e.isControlDown() || e.isMetaDown()) {
+                    if (e.getKeyCode() == KeyEvent.VK_C) {
+                        copySelectedElements();
+                    } else if (e.getKeyCode() == KeyEvent.VK_V) {
+                        pasteElements();
+                    }
+                }
+            }
+        };
+    }
+    
+    // Rotate 90 degrees
+    public void rotate90Left() {
+        rotateSelected(-90);
+    }
+    
+    public void rotate90Right() {
+        rotateSelected(90);
+    }
+    
+    // Copy/Paste
+    public void copySelectedElements() {
+        CopyAction.copySelectedElements(slide);
+    }
+    
+    public void pasteElements() {
+        PasteAction.pasteElements(slide, undoManager);
+        slide.notifyObservers();
+    }
