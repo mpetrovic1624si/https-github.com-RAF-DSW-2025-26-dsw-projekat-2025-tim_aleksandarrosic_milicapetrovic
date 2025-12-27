@@ -8,9 +8,9 @@ public class CopyPasteCommand implements Command{
     private model.Slide slide;
     private SlideElement pastedElement;
 
-    public CopyPasteCommand(model.Slide slide, SlideElement original) {
+    public CopyPasteCommand(model.Slide slide, SlideElement clonedElement) {
         this.slide = slide;
-        this.pastedElement = original.cloneElement();
+        this.pastedElement = clonedElement;
     }
 
     @Override
